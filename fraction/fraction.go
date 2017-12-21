@@ -1,4 +1,4 @@
-package stake
+package Fraction
 
 import wire "github.com/tendermint/go-wire"
 
@@ -17,17 +17,11 @@ type FractionI interface {
 	Positive() bool
 	GT(FractionI) bool
 	LT(FractionI) bool
-	GTint(int64) bool
-	LTint(int64) bool
 	Equal(FractionI) bool
 	Mul(FractionI) FractionI
 	Div(FractionI) FractionI
 	Add(FractionI) FractionI
 	Sub(FractionI) FractionI
-	MulInt(int64) FractionI
-	DivInt(int64) FractionI
-	AddInt(int64) FractionI
-	SubInt(int64) FractionI
 	Evaluate() int64
 }
 
@@ -40,12 +34,15 @@ var _ FractionI = Fraction{} // enforce at compile time
 var _ = wire.RegisterInterface(struct{ FractionI }{}, wire.ConcreteType{Fraction{}, 0x01})
 
 // NewFraction - create a new fraction object
-func NewFraction(Numerator int64, Denominator ...int64) Fraction {
-	var denom int64 = 1
-	if len(Denominator) > 0 {
-		denom = Denominator[0]
+func New(Numerator int64, Denominator ...int64) Fraction {
+	switch len(Denominator) {
+	case 0:
+		return Fraction{Numerator, 1}
+	case 1:
+		return Fraction{Numerator, Denominator[0]}
+	default:
+		panic("improper use of NewFraction, can only have one denominator")
 	}
-	return Fraction{Numerator, denom}
 }
 
 // SetNumerator - return a fraction with a new Numerator
@@ -67,11 +64,6 @@ func (f Fraction) GetNumerator() int64 {
 func (f Fraction) GetDenominator() int64 {
 	return f.Denominator
 }
-
-// TODO define faster operations (mul, add, etc) on One and Zero
-// nolint special predefined fractions
-var One = Fraction{1, 1}
-var Zero = Fraction{0, 1}
 
 // Inv - Inverse
 func (f Fraction) Inv() FractionI {
@@ -124,6 +116,14 @@ func (f Fraction) Positive() bool {
 	return false
 }
 
+// Equal - test if two Fractions are equal, does not simplify
+func (f Fraction) Equal(f2 FractionI) bool {
+	if f.Numerator == 0 {
+		return f2.GetNumerator() == 0
+	}
+	return ((f.Numerator == f2.GetNumerator()) && (f.Denominator == f2.GetDenominator()))
+}
+
 // GT - greater than
 func (f Fraction) GT(f2 FractionI) bool {
 	return f.Sub(f2).Positive()
@@ -134,24 +134,6 @@ func (f Fraction) LT(f2 FractionI) bool {
 	return f.Sub(f2).Negative()
 }
 
-// GTint - greater than integer
-func (f Fraction) GTint(i int64) bool {
-	return f.SubInt(i).Positive()
-}
-
-// LTint - less than integer
-func (f Fraction) LTint(i int64) bool {
-	return f.SubInt(i).Negative()
-}
-
-// Equal - test if two Fractions are equal, does not simplify
-func (f Fraction) Equal(f2 FractionI) bool {
-	if f.Numerator == 0 {
-		return f2.GetNumerator() == 0
-	}
-	return ((f.Numerator == f2.GetNumerator()) && (f.Denominator == f2.GetDenominator()))
-}
-
 // Mul - multiply
 func (f Fraction) Mul(f2 FractionI) FractionI {
 	return Fraction{
@@ -160,27 +142,11 @@ func (f Fraction) Mul(f2 FractionI) FractionI {
 	}.Simplify()
 }
 
-// MulInt - multiply fraction by integer
-func (f Fraction) MulInt(i int64) FractionI {
-	return Fraction{
-		f.Numerator * i,
-		f.Denominator,
-	}.Simplify()
-}
-
 // Div - divide
 func (f Fraction) Div(f2 FractionI) FractionI {
 	return Fraction{
 		f.Numerator * f2.GetDenominator(),
 		f.Denominator * f2.GetNumerator(),
-	}.Simplify()
-}
-
-// DivInt - divide fraction by and integer
-func (f Fraction) DivInt(i int64) FractionI {
-	return Fraction{
-		f.Numerator,
-		f.Denominator * i,
 	}.Simplify()
 }
 
@@ -198,14 +164,6 @@ func (f Fraction) Add(f2 FractionI) FractionI {
 	}.Simplify()
 }
 
-// AddInt - add fraction with integer, no simplication
-func (f Fraction) AddInt(i int64) FractionI {
-	return Fraction{
-		f.Numerator + i*f.Denominator,
-		f.Denominator,
-	}.Simplify()
-}
-
 // Sub - subtract without simplication
 func (f Fraction) Sub(f2 FractionI) FractionI {
 	if f.Denominator == f2.GetDenominator() {
@@ -217,14 +175,6 @@ func (f Fraction) Sub(f2 FractionI) FractionI {
 	return Fraction{
 		f.Numerator*f2.GetDenominator() - f2.GetNumerator()*f.Denominator,
 		f.Denominator * f2.GetDenominator(),
-	}.Simplify()
-}
-
-// SubInt - subtract fraction with integer, no simplication
-func (f Fraction) SubInt(i int64) FractionI {
-	return Fraction{
-		f.Numerator - i*f.Denominator,
-		f.Denominator,
 	}.Simplify()
 }
 
