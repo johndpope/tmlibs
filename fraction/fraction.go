@@ -1,6 +1,8 @@
 package fraction
 
-import wire "github.com/tendermint/go-wire"
+import (
+	wire "github.com/tendermint/go-wire"
+)
 
 // XXX test fractions!
 
@@ -191,8 +193,9 @@ func (f fraction) Evaluate() int64 {
 
 	// evaluate the remainder using bankers rounding
 	remainderDigit := (f.Numerator * 10 / f.Denominator) - (d * 10) // get the first remainder digit
-	isFinalDigit := (f.Numerator*10%f.Denominator == 0)             // is this the final digit in the remainder?
-	if isFinalDigit && remainderDigit == 5 {
+
+	isFinalDigit := (f.Numerator*10%f.Denominator == 0) // is this the final digit in the remainder?
+	if isFinalDigit && (remainderDigit == 5 || remainderDigit == -5) {
 		return d + (d % 2) // always rounds to the even number
 	}
 	if remainderDigit >= 5 {

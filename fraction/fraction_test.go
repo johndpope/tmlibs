@@ -156,6 +156,26 @@ func TestArithmatic(t *testing.T) {
 	}
 }
 
-//func TestEvaluate(t *testing.T) {
-//assert := asrt.New(t)
-//}
+func TestEvaluate(t *testing.T) {
+	assert := asrt.New(t)
+
+	tests := []struct {
+		f1  Fraction
+		res int64
+	}{
+		{New(0), 0},
+		{New(1), 1},
+		{New(1, 4), 0},
+		{New(1, 2), 0},
+		{New(3, 4), 1},
+		{New(5, 6), 1},
+		{New(3, 2), 2},
+		{New(5, 2), 2},
+		{New(113, 12), 9},
+	}
+
+	for _, test := range tests {
+		assert.Equal(test.res, test.f1.Evaluate(), "%v", test.f1)
+		//assert.Equal(test.res*-1, test.f1.Mul(New(-1)).Evaluate(), "%v", test.f1.Mul(New(-1)))
+	}
+}
