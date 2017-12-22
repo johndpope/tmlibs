@@ -59,8 +59,7 @@ func (f fraction) GetDenominator() int64 {
 // RectifySign - make any negative sign exist only in Numerator
 func (f fraction) RectifySign() Fraction {
 	if f.Denominator < 0 {
-		f.Denominator *= -1
-		f.Numerator *= -1
+		return fraction{-1 * f.Numerator, -1 * f.Denominator}
 	}
 	return f
 }
