@@ -6,12 +6,6 @@ import (
 	asrt "github.com/stretchr/testify/assert"
 )
 
-//Mul(Fraction) Fraction
-//Div(Fraction) Fraction
-//Add(Fraction) Fraction
-//Sub(Fraction) Fraction
-//Evaluate() int64
-
 func TestNew(t *testing.T) {
 	assert := asrt.New(t)
 
@@ -25,50 +19,46 @@ func TestNew(t *testing.T) {
 	assert.Panics(func() { New(1, 1, 1) })
 }
 
-func TestNegativePositive(t *testing.T) {
-	assert := asrt.New(t)
-
-	f1 := New(100, 1)
-	f2 := New(-100, -1)
-	f3 := New(100, -1)
-	f4 := New(-100, 1)
-
-	assert.True(f1.Positive())
-	assert.False(f1.Negative())
-
-	assert.True(f2.Positive())
-	assert.False(f2.Negative())
-
-	assert.False(f3.Positive())
-	assert.True(f3.Negative())
-
-	assert.False(f4.Positive())
-	assert.True(f4.Negative())
-}
-
-func TestSimplify(t *testing.T) {
+func TestNewFromDecimal(t *testing.T) {
 	assert := asrt.New(t)
 
 	tests := []struct {
-		start, simplified Fraction
+		decimalStr string
+		expErr     bool
+		exp        Rational
 	}{
-		{New(1), New(1)},
-		{New(-100), New(-100)},
-		{New(100, 100), New(1)},
-		{New(10000000, 10000000), New(1)},
-		{New(-10000000, 10000000), New(-1)},
-		{New(-10000000, -10000000), New(1)},
-		{New(7, 13), New(7, 13)},
-		{New(100, 13), New(100, 13)},
-		{New(4, 2), New(2, 1)},
-		{New(69, 3), New(23)},
-		{New(333, 106), New(333, 106)}, //pi :)
-		{New(10000000, 2), New(5000000)},
+		{"0", false, New(0)},
+		{"1", false, New(1)},
+		{"1.1", false, New(11, 10)},
+		{"0.75", false, New(3, 4)},
+		{"0.8", false, New(4, 5)},
+		{"0.11111", false, New(11111, 100000)},
+		{".", true, rational{}},
+		{".0", true, rational{}},
+		{"1.", true, rational{}},
+		{"foobar", true, rational{}},
+		{"0.foobar", true, rational{}},
+		{"0.foobar.", true, rational{}},
 	}
 
 	for _, test := range tests {
-		assert.True(test.simplified.Equal(test.start.Simplify()))
-		assert.True(test.simplified.Inv().Equal(test.start.Inv().Simplify()))
+
+		res, err := NewFromDecimal(test.decimalStr)
+		if test.expErr {
+			assert.NotNil(err, test.decimalStr)
+		} else {
+			assert.Nil(err)
+			assert.True(res.Equal(test.exp))
+		}
+
+		// negative test
+		res, err = NewFromDecimal("-" + test.decimalStr)
+		if test.expErr {
+			assert.NotNil(err, test.decimalStr)
+		} else {
+			assert.Nil(err)
+			assert.True(res.Equal(test.exp.Mul(New(-1))))
+		}
 	}
 }
 
@@ -76,7 +66,7 @@ func TestEqualities(t *testing.T) {
 	assert := asrt.New(t)
 
 	tests := []struct {
-		f1, f2     Fraction
+		r1, r2     Rational
 		gt, lt, eq bool
 	}{
 		{New(0), New(0), false, false, true},
@@ -106,9 +96,9 @@ func TestEqualities(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		assert.Equal(test.gt, test.f1.GT(test.f2))
-		assert.Equal(test.lt, test.f1.LT(test.f2))
-		assert.Equal(test.eq, test.f1.Equal(test.f2))
+		assert.Equal(test.gt, test.r1.GT(test.r2))
+		assert.Equal(test.lt, test.r1.LT(test.r2))
+		assert.Equal(test.eq, test.r1.Equal(test.r2))
 	}
 
 }
@@ -117,10 +107,10 @@ func TestArithmatic(t *testing.T) {
 	assert := asrt.New(t)
 
 	tests := []struct {
-		f1, f2                         Fraction
-		resMul, resDiv, resAdd, resSub Fraction
+		r1, r2                         Rational
+		resMul, resDiv, resAdd, resSub Rational
 	}{
-		// f1    f2      MUL     DIV     ADD     SUB
+		// r1    r2      MUL     DIV     ADD     SUB
 		{New(0), New(0), New(0), New(0), New(0), New(0)},
 		{New(1), New(0), New(0), New(0), New(1), New(1)},
 		{New(0), New(1), New(0), New(0), New(1), New(-1)},
@@ -144,14 +134,14 @@ func TestArithmatic(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		assert.Equal(test.resMul, test.f1.Mul(test.f2), "f1 %v, f2 %v", test.f1, test.f2)
-		assert.Equal(test.resAdd, test.f1.Add(test.f2), "f1 %v, f2 %v", test.f1, test.f2)
-		assert.Equal(test.resSub, test.f1.Sub(test.f2), "f1 %v, f2 %v", test.f1, test.f2)
+		assert.True(test.resMul.Equal(test.r1.Mul(test.r2)), "r1 %v, r2 %v", test.r1.GetRat(), test.r2.GetRat())
+		assert.True(test.resAdd.Equal(test.r1.Add(test.r2)), "r1 %v, r2 %v", test.r1.GetRat(), test.r2.GetRat())
+		assert.True(test.resSub.Equal(test.r1.Sub(test.r2)), "r1 %v, r2 %v", test.r1.GetRat(), test.r2.GetRat())
 
-		if test.f2.GetNumerator() == 0 { // panic for divide by zero
-			assert.Panics(func() { test.f1.Div(test.f2) })
+		if test.r2.Num() == 0 { // panic for divide by zero
+			assert.Panics(func() { test.r1.Quo(test.r2) })
 		} else {
-			assert.Equal(test.resDiv, test.f1.Div(test.f2), "f1 %v, f2 %v", test.f1, test.f2)
+			assert.True(test.resDiv.Equal(test.r1.Quo(test.r2)), "r1 %v, r2 %v", test.r1.GetRat(), test.r2.GetRat())
 		}
 	}
 }
@@ -160,7 +150,7 @@ func TestEvaluate(t *testing.T) {
 	assert := asrt.New(t)
 
 	tests := []struct {
-		f1  Fraction
+		r1  Rational
 		res int64
 	}{
 		{New(0), 0},
@@ -171,11 +161,15 @@ func TestEvaluate(t *testing.T) {
 		{New(5, 6), 1},
 		{New(3, 2), 2},
 		{New(5, 2), 2},
+		{New(6, 11), 1},  // 0.545-> 1 even though 5 is first decimal and 1 not even
+		{New(17, 11), 2}, // 1.545
+		{New(5, 11), 0},
+		{New(16, 11), 1},
 		{New(113, 12), 9},
 	}
 
 	for _, test := range tests {
-		assert.Equal(test.res, test.f1.Evaluate(), "%v", test.f1)
-		//assert.Equal(test.res*-1, test.f1.Mul(New(-1)).Evaluate(), "%v", test.f1.Mul(New(-1)))
+		assert.Equal(test.res, test.r1.Evaluate(), "%v", test.r1)
+		assert.Equal(test.res*-1, test.r1.Mul(New(-1)).Evaluate(), "%v", test.r1.Mul(New(-1)))
 	}
 }
