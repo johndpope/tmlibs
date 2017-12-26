@@ -1,4 +1,4 @@
-package rational
+package Rat
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 	wire "github.com/tendermint/go-wire"
 )
 
-// Rational - big rational with additional functionality
+// Rational - big Rat with additional functionality
 type Rational interface {
 	GetRat() *big.Rat
 	Num() int64
@@ -26,20 +26,20 @@ type Rational interface {
 	Evaluate() int64
 }
 
-type rational struct {
+type Rat struct {
 	*big.Rat
 }
 
-var _ Rational = rational{} // enforce at compile time
-var _ = wire.RegisterInterface(struct{ Rational }{}, wire.ConcreteType{rational{}, 0x01})
+var _ Rational = Rat{} // enforce at compile time
+var _ = wire.RegisterInterface(struct{ Rational }{}, wire.ConcreteType{Rat{}, 0x01})
 
-// New - create a new rational from integers
+// New - create a new Rat from integers
 func New(Numerator int64, Denominator ...int64) Rational {
 	switch len(Denominator) {
 	case 0:
-		return rational{big.NewRat(Numerator, 1)}
+		return Rat{big.NewRat(Numerator, 1)}
 	case 1:
-		return rational{big.NewRat(Numerator, Denominator[0])}
+		return Rat{big.NewRat(Numerator, Denominator[0])}
 	default:
 		panic("improper use of New, can only have one denominator")
 	}
@@ -85,24 +85,24 @@ func NewFromDecimal(decimalStr string) (f Rational, err error) {
 		num *= -1
 	}
 
-	return rational{big.NewRat(int64(num), denom)}, nil
+	return Rat{big.NewRat(int64(num), denom)}, nil
 }
 
-func (r rational) GetRat() *big.Rat         { return r.Rat }                                          // GetRat - get big.Rational
-func (r rational) Num() int64               { return r.Rat.Num().Int64() }                            // Num - return the numerator
-func (r rational) Denom() int64             { return r.Rat.Denom().Int64() }                          // Denom  - return the denominator
-func (r rational) IsZero() bool             { return r.Num() == 0 }                                   // IsZero - Is the rational equal to zero
-func (r rational) Equal(r2 Rational) bool   { return r.Rat.Cmp(r2.GetRat()) == 0 }                    // Equal - rationals are equal
-func (r rational) GT(r2 Rational) bool      { return r.Rat.Cmp(r2.GetRat()) == 1 }                    // GT - greater than
-func (r rational) LT(r2 Rational) bool      { return r.Rat.Cmp(r2.GetRat()) == -1 }                   // LT - less than
-func (r rational) Inv() Rational            { return rational{new(big.Rat).Inv(r.Rat)} }              // Inv - inverse
-func (r rational) Mul(r2 Rational) Rational { return rational{new(big.Rat).Mul(r.Rat, r2.GetRat())} } // Mul - multiplication
-func (r rational) Quo(r2 Rational) Rational { return rational{new(big.Rat).Quo(r.Rat, r2.GetRat())} } // Quo - quotient
-func (r rational) Add(r2 Rational) Rational { return rational{new(big.Rat).Add(r.Rat, r2.GetRat())} } // Add - addition
-func (r rational) Sub(r2 Rational) Rational { return rational{new(big.Rat).Sub(r.Rat, r2.GetRat())} } // Sub - subtraction
+func (r Rat) GetRat() *big.Rat         { return r.Rat }                                     // GetRat - get big.Rational
+func (r Rat) Num() int64               { return r.Rat.Num().Int64() }                       // Num - return the numerator
+func (r Rat) Denom() int64             { return r.Rat.Denom().Int64() }                     // Denom  - return the denominator
+func (r Rat) IsZero() bool             { return r.Num() == 0 }                              // IsZero - Is the Rat equal to zero
+func (r Rat) Equal(r2 Rational) bool   { return r.Rat.Cmp(r2.GetRat()) == 0 }               // Equal - rationals are equal
+func (r Rat) GT(r2 Rational) bool      { return r.Rat.Cmp(r2.GetRat()) == 1 }               // GT - greater than
+func (r Rat) LT(r2 Rational) bool      { return r.Rat.Cmp(r2.GetRat()) == -1 }              // LT - less than
+func (r Rat) Inv() Rational            { return Rat{new(big.Rat).Inv(r.Rat)} }              // Inv - inverse
+func (r Rat) Mul(r2 Rational) Rational { return Rat{new(big.Rat).Mul(r.Rat, r2.GetRat())} } // Mul - multiplication
+func (r Rat) Quo(r2 Rational) Rational { return Rat{new(big.Rat).Quo(r.Rat, r2.GetRat())} } // Quo - quotient
+func (r Rat) Add(r2 Rational) Rational { return Rat{new(big.Rat).Add(r.Rat, r2.GetRat())} } // Add - addition
+func (r Rat) Sub(r2 Rational) Rational { return Rat{new(big.Rat).Sub(r.Rat, r2.GetRat())} } // Sub - subtraction
 
 // Evaluate - evaluate the rational using bankers rounding
-func (r rational) Evaluate() int64 {
+func (r Rat) Evaluate() int64 {
 
 	num := r.Num()
 	denom := r.Denom()
