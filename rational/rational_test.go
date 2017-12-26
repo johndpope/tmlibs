@@ -1,4 +1,4 @@
-package fraction
+package rational
 
 import (
 	"testing"

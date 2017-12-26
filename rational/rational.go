@@ -1,14 +1,16 @@
-package fraction
+package rational
 
 import (
+	"fmt"
+	"math/big"
+	"strings"
+
 	wire "github.com/tendermint/go-wire"
 )
 
-// XXX test fractions!
-
-// Fraction -  basic fraction functionality
-// TODO better name that Fraction?
-type Fraction interface {
+// Rational - big rational with additional functionality
+type Rational interface {
+	big.Rat
 	GetNumerator() int64
 	GetDenominator() int64
 	RectifySign() Fraction
@@ -19,6 +21,7 @@ type Fraction interface {
 	GT(Fraction) bool
 	LT(Fraction) bool
 	Equal(Fraction) bool
+	IsZero(Fraction) bool
 	Mul(Fraction) Fraction
 	Div(Fraction) Fraction
 	Add(Fraction) Fraction
@@ -44,6 +47,17 @@ func New(Numerator int64, Denominator ...int64) Fraction {
 	default:
 		panic("improper use of NewFraction, can only have one denominator")
 	}
+}
+
+// NewFromDecimal - create a fraction from decimal string
+func NewFromDecimal(decimalStr string) (f Fraction, err error) {
+	str := strings.Split(decimalStr, ".")
+	if len(str) != 2 {
+		return f, fmt.Errorf("not a decimal string")
+	}
+	wholePart, decimalPart := str[0], str[1]
+
+	return
 }
 
 // GetNumerator - return the Numerator
@@ -112,6 +126,11 @@ func (f fraction) Positive() bool {
 		return false
 	}
 	return false
+}
+
+// IsZero - Is the fraction equal to zero
+func (f fraction) IsZero() bool {
+	return f.GetNumerator() == 0
 }
 
 // Equal - test if two Fractions are equal, does not simplify
