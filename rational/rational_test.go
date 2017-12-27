@@ -188,6 +188,5 @@ func TestSerialization(t *testing.T) {
 	err = json.Unmarshal(rMarshal, &rUnmarshal)
 	require.Nil(err)
 
-	//panic(fmt.Sprintf("debug rUnmarshal: %v\n", rUnmarshal))
 	assert.True(r.Equal(rUnmarshal), "original: %v, unmarshalled: %v", r, rUnmarshal)
 }

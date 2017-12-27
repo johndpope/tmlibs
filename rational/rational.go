@@ -6,8 +6,6 @@ import (
 	"math/big"
 	"strconv"
 	"strings"
-
-	wire "github.com/tendermint/go-wire"
 )
 
 // Rational - big Rat with additional functionality
@@ -33,7 +31,9 @@ type Rat struct {
 }
 
 var _ Rational = Rat{} // enforce at compile time
-var _ = wire.RegisterInterface(struct{ Rational }{}, wire.ConcreteType{Rat{}, 0x01})
+
+// XXX Is this even possible right now? or are we stuck using the struct?
+//var _ = wire.RegisterInterface(struct{ Rational }{}, wire.ConcreteType{Rat{}, 0x01})
 
 // New - create a new Rat from integers
 func New(Numerator int64, Denominator ...int64) Rational {
@@ -149,6 +149,6 @@ func (r *Rat) UnmarshalJSON(data []byte) error {
 	if err != nil {
 		return err
 	}
-	r = &Rat{big.NewRat(ratMar.Numerator, ratMar.Denominator)}
+	r.Rat = big.NewRat(ratMar.Numerator, ratMar.Denominator)
 	return nil
 }
