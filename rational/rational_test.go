@@ -1,9 +1,11 @@
 package rational
 
 import (
+	"encoding/json"
 	"testing"
 
 	asrt "github.com/stretchr/testify/assert"
+	rqr "github.com/stretchr/testify/require"
 )
 
 func TestNew(t *testing.T) {
@@ -33,12 +35,12 @@ func TestNewFromDecimal(t *testing.T) {
 		{"0.75", false, New(3, 4)},
 		{"0.8", false, New(4, 5)},
 		{"0.11111", false, New(11111, 100000)},
-		{".", true, rational{}},
-		{".0", true, rational{}},
-		{"1.", true, rational{}},
-		{"foobar", true, rational{}},
-		{"0.foobar", true, rational{}},
-		{"0.foobar.", true, rational{}},
+		{".", true, Rat{}},
+		{".0", true, Rat{}},
+		{"1.", true, Rat{}},
+		{"foobar", true, Rat{}},
+		{"0.foobar", true, Rat{}},
+		{"0.foobar.", true, Rat{}},
 	}
 
 	for _, test := range tests {
@@ -172,4 +174,20 @@ func TestEvaluate(t *testing.T) {
 		assert.Equal(test.res, test.r1.Evaluate(), "%v", test.r1)
 		assert.Equal(test.res*-1, test.r1.Mul(New(-1)).Evaluate(), "%v", test.r1.Mul(New(-1)))
 	}
+}
+
+func TestSerialization(t *testing.T) {
+	assert, require := asrt.New(t), rqr.New(t)
+
+	r := New(1, 3)
+
+	rMarshal, err := json.Marshal(r)
+	require.Nil(err)
+
+	var rUnmarshal Rat
+	err = json.Unmarshal(rMarshal, &rUnmarshal)
+	require.Nil(err)
+
+	//panic(fmt.Sprintf("debug rUnmarshal: %v\n", rUnmarshal))
+	assert.True(r.Equal(rUnmarshal), "original: %v, unmarshalled: %v", r, rUnmarshal)
 }

@@ -1,6 +1,7 @@
-package Rat
+package rational
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/big"
 	"strconv"
@@ -26,8 +27,9 @@ type Rational interface {
 	Evaluate() int64
 }
 
+// Rat - extend big.Rat
 type Rat struct {
-	*big.Rat
+	*big.Rat `json:"rat"`
 }
 
 var _ Rational = Rat{} // enforce at compile time
@@ -88,6 +90,7 @@ func NewFromDecimal(decimalStr string) (f Rational, err error) {
 	return Rat{big.NewRat(int64(num), denom)}, nil
 }
 
+//nolint
 func (r Rat) GetRat() *big.Rat         { return r.Rat }                                     // GetRat - get big.Rational
 func (r Rat) Num() int64               { return r.Rat.Num().Int64() }                       // Num - return the numerator
 func (r Rat) Denom() int64             { return r.Rat.Denom().Int64() }                     // Denom  - return the denominator
@@ -125,4 +128,27 @@ func (r Rat) Evaluate() int64 {
 		d--
 	}
 	return d
+}
+
+//___________________________________________________________________________________
+
+// RatMarshal - Marshable Rational Struct
+type RatMarshal struct {
+	Numerator, Denominator int64
+}
+
+// MarshalJSON - custom implementation of JSON Marshal
+func (r Rat) MarshalJSON() ([]byte, error) {
+	return json.Marshal(RatMarshal{r.Num(), r.Denom()})
+}
+
+// UnmarshalJSON - custom implementation of JSON Unmarshal
+func (r *Rat) UnmarshalJSON(data []byte) error {
+	ratMar := new(RatMarshal)
+	err := json.Unmarshal(data, ratMar)
+	if err != nil {
+		return err
+	}
+	r = &Rat{big.NewRat(ratMar.Numerator, ratMar.Denominator)}
+	return nil
 }
