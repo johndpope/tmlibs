@@ -27,7 +27,7 @@ func TestNewFromDecimal(t *testing.T) {
 	tests := []struct {
 		decimalStr string
 		expErr     bool
-		exp        Rational
+		exp        Rat
 	}{
 		{"0", false, New(0)},
 		{"1", false, New(1)},
@@ -68,7 +68,7 @@ func TestEqualities(t *testing.T) {
 	assert := asrt.New(t)
 
 	tests := []struct {
-		r1, r2     Rational
+		r1, r2     Rat
 		gt, lt, eq bool
 	}{
 		{New(0), New(0), false, false, true},
@@ -109,8 +109,8 @@ func TestArithmatic(t *testing.T) {
 	assert := asrt.New(t)
 
 	tests := []struct {
-		r1, r2                         Rational
-		resMul, resDiv, resAdd, resSub Rational
+		r1, r2                         Rat
+		resMul, resDiv, resAdd, resSub Rat
 	}{
 		// r1    r2      MUL     DIV     ADD     SUB
 		{New(0), New(0), New(0), New(0), New(0), New(0)},
@@ -152,7 +152,7 @@ func TestEvaluate(t *testing.T) {
 	assert := asrt.New(t)
 
 	tests := []struct {
-		r1  Rational
+		r1  Rat
 		res int64
 	}{
 		{New(0), 0},

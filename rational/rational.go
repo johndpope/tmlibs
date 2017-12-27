@@ -8,35 +8,33 @@ import (
 	"strings"
 )
 
-// Rational - big Rat with additional functionality
-type Rational interface {
-	GetRat() *big.Rat
-	Num() int64
-	Denom() int64
-	GT(Rational) bool
-	LT(Rational) bool
-	Equal(Rational) bool
-	IsZero() bool
-	Inv() Rational
-	Mul(Rational) Rational
-	Quo(Rational) Rational
-	Add(Rational) Rational
-	Sub(Rational) Rational
-	Evaluate() int64
-}
-
 // Rat - extend big.Rat
 type Rat struct {
 	*big.Rat `json:"rat"`
 }
 
-var _ Rational = Rat{} // enforce at compile time
-
-// XXX Is this even possible right now? or are we stuck using the struct?
+//TODO implement interface after go-wire refactor
+//// Rational - big Rat with additional functionality
+//type Rational interface {
+//GetRat() *big.Rat
+//Num() int64
+//Denom() int64
+//GT(Rational) bool
+//LT(Rational) bool
+//Equal(Rational) bool
+//IsZero() bool
+//Inv() Rational
+//Mul(Rational) Rational
+//Quo(Rational) Rational
+//Add(Rational) Rational
+//Sub(Rational) Rational
+//Evaluate() int64
+//}
+//var _ Rational = Rat{} // enforce at compile time
 //var _ = wire.RegisterInterface(struct{ Rational }{}, wire.ConcreteType{Rat{}, 0x01})
 
 // New - create a new Rat from integers
-func New(Numerator int64, Denominator ...int64) Rational {
+func New(Numerator int64, Denominator ...int64) Rat {
 	switch len(Denominator) {
 	case 0:
 		return Rat{big.NewRat(Numerator, 1)}
@@ -48,7 +46,7 @@ func New(Numerator int64, Denominator ...int64) Rational {
 }
 
 //NewFromDecimal - create a rational from decimal string or integer string
-func NewFromDecimal(decimalStr string) (f Rational, err error) {
+func NewFromDecimal(decimalStr string) (f Rat, err error) {
 
 	// first extract any negative symbol
 	neg := false
@@ -91,18 +89,18 @@ func NewFromDecimal(decimalStr string) (f Rational, err error) {
 }
 
 //nolint
-func (r Rat) GetRat() *big.Rat         { return r.Rat }                                     // GetRat - get big.Rational
-func (r Rat) Num() int64               { return r.Rat.Num().Int64() }                       // Num - return the numerator
-func (r Rat) Denom() int64             { return r.Rat.Denom().Int64() }                     // Denom  - return the denominator
-func (r Rat) IsZero() bool             { return r.Num() == 0 }                              // IsZero - Is the Rat equal to zero
-func (r Rat) Equal(r2 Rational) bool   { return r.Rat.Cmp(r2.GetRat()) == 0 }               // Equal - rationals are equal
-func (r Rat) GT(r2 Rational) bool      { return r.Rat.Cmp(r2.GetRat()) == 1 }               // GT - greater than
-func (r Rat) LT(r2 Rational) bool      { return r.Rat.Cmp(r2.GetRat()) == -1 }              // LT - less than
-func (r Rat) Inv() Rational            { return Rat{new(big.Rat).Inv(r.Rat)} }              // Inv - inverse
-func (r Rat) Mul(r2 Rational) Rational { return Rat{new(big.Rat).Mul(r.Rat, r2.GetRat())} } // Mul - multiplication
-func (r Rat) Quo(r2 Rational) Rational { return Rat{new(big.Rat).Quo(r.Rat, r2.GetRat())} } // Quo - quotient
-func (r Rat) Add(r2 Rational) Rational { return Rat{new(big.Rat).Add(r.Rat, r2.GetRat())} } // Add - addition
-func (r Rat) Sub(r2 Rational) Rational { return Rat{new(big.Rat).Sub(r.Rat, r2.GetRat())} } // Sub - subtraction
+func (r Rat) GetRat() *big.Rat  { return r.Rat }                                     // GetRat - get big.Rat
+func (r Rat) Num() int64        { return r.Rat.Num().Int64() }                       // Num - return the numerator
+func (r Rat) Denom() int64      { return r.Rat.Denom().Int64() }                     // Denom  - return the denominator
+func (r Rat) IsZero() bool      { return r.Num() == 0 }                              // IsZero - Is the Rat equal to zero
+func (r Rat) Equal(r2 Rat) bool { return r.Rat.Cmp(r2.GetRat()) == 0 }               // Equal - rationals are equal
+func (r Rat) GT(r2 Rat) bool    { return r.Rat.Cmp(r2.GetRat()) == 1 }               // GT - greater than
+func (r Rat) LT(r2 Rat) bool    { return r.Rat.Cmp(r2.GetRat()) == -1 }              // LT - less than
+func (r Rat) Inv() Rat          { return Rat{new(big.Rat).Inv(r.Rat)} }              // Inv - inverse
+func (r Rat) Mul(r2 Rat) Rat    { return Rat{new(big.Rat).Mul(r.Rat, r2.GetRat())} } // Mul - multiplication
+func (r Rat) Quo(r2 Rat) Rat    { return Rat{new(big.Rat).Quo(r.Rat, r2.GetRat())} } // Quo - quotient
+func (r Rat) Add(r2 Rat) Rat    { return Rat{new(big.Rat).Add(r.Rat, r2.GetRat())} } // Add - addition
+func (r Rat) Sub(r2 Rat) Rat    { return Rat{new(big.Rat).Sub(r.Rat, r2.GetRat())} } // Sub - subtraction
 
 // Evaluate - evaluate the rational using bankers rounding
 func (r Rat) Evaluate() int64 {
@@ -132,7 +130,7 @@ func (r Rat) Evaluate() int64 {
 
 //___________________________________________________________________________________
 
-// RatMarshal - Marshable Rational Struct
+// RatMarshal - Marshable Rat Struct
 type RatMarshal struct {
 	Numerator, Denominator int64
 }
