@@ -33,6 +33,12 @@ type Rat struct {
 //var _ Rational = Rat{} // enforce at compile time
 //var _ = wire.RegisterInterface(struct{ Rational }{}, wire.ConcreteType{Rat{}, 0x01})
 
+// nolint - common values
+var (
+	Zero = Rat{big.NewRat(0, 1)}
+	One  = Rat{big.NewRat(1, 1)}
+)
+
 // New - create a new Rat from integers
 func New(Numerator int64, Denominator ...int64) Rat {
 	switch len(Denominator) {
