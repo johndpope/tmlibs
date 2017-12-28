@@ -108,33 +108,72 @@ func (r Rat) Quo(r2 Rat) Rat    { return Rat{new(big.Rat).Quo(r.Rat, r2.GetRat()
 func (r Rat) Add(r2 Rat) Rat    { return Rat{new(big.Rat).Add(r.Rat, r2.GetRat())} } // Add - addition
 func (r Rat) Sub(r2 Rat) Rat    { return Rat{new(big.Rat).Sub(r.Rat, r2.GetRat())} } // Sub - subtraction
 
-// Evaluate - evaluate the rational using bankers rounding
-func (r Rat) Evaluate() int64 {
+var zero = big.NewInt(0)
+var one = big.NewInt(1)
+var two = big.NewInt(2)
+var five = big.NewInt(5)
+var nFive = big.NewInt(-5)
+var ten = big.NewInt(10)
 
-	num := r.Num()
-	denom := r.Denom()
+// EvaluateBig - evaluate the rational using bankers rounding
+func (r Rat) EvaluateBig() *big.Int {
 
-	d := num / denom // always drops the decimal
-	if num%denom == 0 {
+	num := r.Rat.Num()
+	denom := r.Rat.Denom()
+
+	d, rem := new(big.Int), new(big.Int)
+	d.QuoRem(num, denom, rem) // always drops the decimal
+	if rem.Cmp(zero) == 0 {   // is the remainder zero
 		return d
 	}
 
 	// evaluate the remainder using bankers rounding
-	remainderDigit := (num * 10 / denom) - (d * 10) // get the first remainder digit
-	isFinalDigit := (num*10%denom == 0)             // is this the final digit in the remainder?
+	tenNum := new(big.Int).Mul(num, ten)
+	tenD := new(big.Int).Mul(d, ten)
+	remainderDigit := new(big.Int).Sub(new(big.Int).Quo(tenNum, denom), tenD) // get the first remainder digit
+	isFinalDigit := (new(big.Int).Rem(tenNum, denom).Cmp(zero) == 0)          // is this the final digit in the remainder?
 
 	switch {
-	case isFinalDigit && (remainderDigit == 5 || remainderDigit == -5):
-		return d + (d % 2) // always rounds to the even number
-	case remainderDigit >= 5:
-		d++
-	case remainderDigit <= -5:
-		d--
+	case isFinalDigit && (remainderDigit.Cmp(five) == 0 || remainderDigit.Cmp(nFive) == 0):
+		dRem2 := new(big.Int).Rem(d, two)
+		return new(big.Int).Add(d, dRem2) // always rounds to the even number
+	case remainderDigit.Cmp(five) != -1: //remainderDigit >= 5:
+		d.Add(d, one)
+	case remainderDigit.Cmp(nFive) != 1: //remainderDigit <= -5:
+		d.Sub(d, one)
 	}
 	return d
 }
 
+// Evaluate - evaluate the rational using bankers rounding
+func (r Rat) Evaluate() int64 {
+	return r.EvaluateBig().Int64()
+}
+
+//func (r Rat) Evaluate() int64 {
+//num := r.Num()
+//denom := r.Denom()
+//d := num / denom // always drops the decimal
+//if num%denom == 0 {
+//return d
+//}
+//// evaluate the remainder using bankers rounding
+//remainderDigit := (num * 10 / denom) - (d * 10) // get the first remainder digit
+//isFinalDigit := (num*10%denom == 0)             // is this the final digit in the remainder?
+//switch {
+//case isFinalDigit && (remainderDigit == 5 || remainderDigit == -5):
+//return d + (d % 2) // always rounds to the even number
+//case remainderDigit >= 5:
+//d++
+//case remainderDigit <= -5:
+//d--
+//}
+//return d
+//}
+
 //___________________________________________________________________________________
+
+//TODO there has got to be a better way using native MarshalText and UnmarshalText
 
 // RatMarshal - Marshable Rat Struct
 type RatMarshal struct {
