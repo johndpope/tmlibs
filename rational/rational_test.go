@@ -2,6 +2,7 @@ package rational
 
 import (
 	"encoding/json"
+	"math/big"
 	"testing"
 
 	asrt "github.com/stretchr/testify/assert"
@@ -43,23 +44,23 @@ func TestNewFromDecimal(t *testing.T) {
 		{"0.foobar.", true, Rat{}},
 	}
 
-	for _, test := range tests {
+	for _, tc := range tests {
 
-		res, err := NewFromDecimal(test.decimalStr)
-		if test.expErr {
-			assert.NotNil(err, test.decimalStr)
+		res, err := NewFromDecimal(tc.decimalStr)
+		if tc.expErr {
+			assert.NotNil(err, tc.decimalStr)
 		} else {
 			assert.Nil(err)
-			assert.True(res.Equal(test.exp))
+			assert.True(res.Equal(tc.exp))
 		}
 
-		// negative test
-		res, err = NewFromDecimal("-" + test.decimalStr)
-		if test.expErr {
-			assert.NotNil(err, test.decimalStr)
+		// negative tc
+		res, err = NewFromDecimal("-" + tc.decimalStr)
+		if tc.expErr {
+			assert.NotNil(err, tc.decimalStr)
 		} else {
 			assert.Nil(err)
-			assert.True(res.Equal(test.exp.Mul(New(-1))))
+			assert.True(res.Equal(tc.exp.Mul(New(-1))))
 		}
 	}
 }
@@ -97,10 +98,10 @@ func TestEqualities(t *testing.T) {
 		{New(-1, 7), New(-3, 7), true, false, false},
 	}
 
-	for _, test := range tests {
-		assert.Equal(test.gt, test.r1.GT(test.r2))
-		assert.Equal(test.lt, test.r1.LT(test.r2))
-		assert.Equal(test.eq, test.r1.Equal(test.r2))
+	for _, tc := range tests {
+		assert.Equal(tc.gt, tc.r1.GT(tc.r2))
+		assert.Equal(tc.lt, tc.r1.LT(tc.r2))
+		assert.Equal(tc.eq, tc.r1.Equal(tc.r2))
 	}
 
 }
@@ -135,15 +136,15 @@ func TestArithmatic(t *testing.T) {
 		{New(100), New(1, 7), New(100, 7), New(700), New(701, 7), New(699, 7)},
 	}
 
-	for _, test := range tests {
-		assert.True(test.resMul.Equal(test.r1.Mul(test.r2)), "r1 %v, r2 %v", test.r1.GetRat(), test.r2.GetRat())
-		assert.True(test.resAdd.Equal(test.r1.Add(test.r2)), "r1 %v, r2 %v", test.r1.GetRat(), test.r2.GetRat())
-		assert.True(test.resSub.Equal(test.r1.Sub(test.r2)), "r1 %v, r2 %v", test.r1.GetRat(), test.r2.GetRat())
+	for _, tc := range tests {
+		assert.True(tc.resMul.Equal(tc.r1.Mul(tc.r2)), "r1 %v, r2 %v", tc.r1.GetRat(), tc.r2.GetRat())
+		assert.True(tc.resAdd.Equal(tc.r1.Add(tc.r2)), "r1 %v, r2 %v", tc.r1.GetRat(), tc.r2.GetRat())
+		assert.True(tc.resSub.Equal(tc.r1.Sub(tc.r2)), "r1 %v, r2 %v", tc.r1.GetRat(), tc.r2.GetRat())
 
-		if test.r2.Num() == 0 { // panic for divide by zero
-			assert.Panics(func() { test.r1.Quo(test.r2) })
+		if tc.r2.Num() == 0 { // panic for divide by zero
+			assert.Panics(func() { tc.r1.Quo(tc.r2) })
 		} else {
-			assert.True(test.resDiv.Equal(test.r1.Quo(test.r2)), "r1 %v, r2 %v", test.r1.GetRat(), test.r2.GetRat())
+			assert.True(tc.resDiv.Equal(tc.r1.Quo(tc.r2)), "r1 %v, r2 %v", tc.r1.GetRat(), tc.r2.GetRat())
 		}
 	}
 }
@@ -170,9 +171,36 @@ func TestEvaluate(t *testing.T) {
 		{New(113, 12), 9},
 	}
 
-	for _, test := range tests {
-		assert.Equal(test.res, test.r1.Evaluate(), "%v", test.r1)
-		assert.Equal(test.res*-1, test.r1.Mul(New(-1)).Evaluate(), "%v", test.r1.Mul(New(-1)))
+	for _, tc := range tests {
+		assert.Equal(tc.res, tc.r1.Evaluate(), "%v", tc.r1)
+		assert.Equal(tc.res*-1, tc.r1.Mul(New(-1)).Evaluate(), "%v", tc.r1.Mul(New(-1)))
+	}
+}
+
+func TestRound(t *testing.T) {
+	assert, require := asrt.New(t), rqr.New(t)
+
+	many3 := "333333333333333333333333333333333333333333333"
+	many7 := "777777777777777777777777777777777777777777777"
+	big3, worked := new(big.Int).SetString(many3, 10)
+	require.True(worked)
+	big7, worked := new(big.Int).SetString(many7, 10)
+	require.True(worked)
+
+	tests := []struct {
+		r1, res    Rat
+		precFactor int64
+	}{
+		{New(333, 777), New(429, 1000), 1000},
+		{Rat{new(big.Rat).SetFrac(big3, big7)}, New(429, 1000), 1000},
+		{Rat{new(big.Rat).SetFrac(big3, big7)}, New(4285714286, 10000000000), 10000000000},
+		{New(1, 2), New(1, 2), 1000},
+	}
+
+	for _, tc := range tests {
+		assert.Equal(tc.res, tc.r1.Round(tc.precFactor), "%v", tc.r1)
+		negR1, negRes := tc.r1.Mul(New(-1)), tc.res.Mul(New(-1))
+		assert.Equal(negRes, negR1.Round(tc.precFactor), "%v", negR1)
 	}
 }
 

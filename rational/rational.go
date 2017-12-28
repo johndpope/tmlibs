@@ -150,6 +150,12 @@ func (r Rat) Evaluate() int64 {
 	return r.EvaluateBig().Int64()
 }
 
+// Round - round Rat with the provided precisionFactor
+func (r Rat) Round(precisionFactor int64) Rat {
+	rTen := Rat{new(big.Rat).Mul(r.Rat, big.NewRat(precisionFactor, 1))}
+	return Rat{big.NewRat(rTen.Evaluate(), precisionFactor)}
+}
+
 //func (r Rat) Evaluate() int64 {
 //num := r.Num()
 //denom := r.Denom()
