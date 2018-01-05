@@ -122,7 +122,7 @@ func (r Rat) EvaluateBig() *big.Int {
 	denom := r.Rat.Denom()
 
 	d, rem := new(big.Int), new(big.Int)
-	d.QuoRem(num, denom, rem) // always drops the decimal
+	d.QuoRem(num, denom, rem)
 	if rem.Cmp(zero) == 0 {   // is the remainder zero
 		return d
 	}
