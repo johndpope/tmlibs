@@ -14,13 +14,16 @@ import (
 )
 
 const (
-	HomeFlag     = "home"
+	HomeDirFlag  = "home"
+	ConfigDiFlag = "config-dir"
+	DataDiFlag   = "data-dir"
+
 	TraceFlag    = "trace"
 	OutputFlag   = "output"
 	EncodingFlag = "encoding"
 )
 
-// Executable is the minimal interface to *corba.Command, so we can
+// Executable is the minimal interface to *cobra.Command, so we can
 // wrap if desired before the test
 type Executable interface {
 	Execute() error
@@ -28,17 +31,26 @@ type Executable interface {
 
 // PrepareBaseCmd is meant for tendermint and other servers
 func PrepareBaseCmd(cmd *cobra.Command, envPrefix, defaultHome string) Executor {
+
+	defaultConfig := filepath.Join(defaultHome, "config")
+	defaultData := filepath.Join(defaultHome, "data")
+
 	cobra.OnInitialize(func() { initEnv(envPrefix) })
-	cmd.PersistentFlags().StringP(HomeFlag, "", defaultHome, "directory for config and data")
+
+	cmd.PersistentFlags().StringP(HomeDirFlag, "", defaultHome, "path to home directory (contains config and data directories)")
+	cmd.PersistentFlags().StringP(ConfigDirFlag, "", defaultConfig, "path to config directory")
+	cmd.PersistentFlags().StringP(DataDirFlag, "", defaultData, "path to data directory")
+
 	cmd.PersistentFlags().Bool(TraceFlag, false, "print out full stack trace on errors")
 	cmd.PersistentPreRunE = concatCobraCmdFuncs(bindFlagsLoadViper, cmd.PersistentPreRunE)
+
 	return Executor{cmd, os.Exit}
 }
 
 // PrepareMainCmd is meant for client side libs that want some more flags
 //
 // This adds --encoding (hex, btc, base64) and --output (text, json) to
-// the command.  These only really make sense in interactive commands.
+// the command. These only really make sense in interactive commands.
 func PrepareMainCmd(cmd *cobra.Command, envPrefix, defaultHome string) Executor {
 	cmd.PersistentFlags().StringP(EncodingFlag, "e", "hex", "Binary encoding (hex|b64|btc)")
 	cmd.PersistentFlags().StringP(OutputFlag, "o", "text", "Output format (text|json)")
@@ -130,8 +142,8 @@ func bindFlagsLoadViper(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	homeDir := viper.GetString(HomeFlag)
-	viper.Set(HomeFlag, homeDir)
+	homeDir := viper.GetString(HomeDirFlag)
+	viper.Set(HomeDirFlag, homeDir)
 	viper.SetConfigName("config") // name of config file (without extension)
 	viper.AddConfigPath(homeDir)  // search root directory
 
