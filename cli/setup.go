@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -14,9 +15,9 @@ import (
 )
 
 const (
-	HomeDirFlag  = "home"
-	ConfigDiFlag = "config-dir"
-	DataDiFlag   = "data-dir"
+	HomeDirFlag   = "home"
+	ConfigDirFlag = "config-dir"
+	DataDirFlag   = "data-dir"
 
 	TraceFlag    = "trace"
 	OutputFlag   = "output"
